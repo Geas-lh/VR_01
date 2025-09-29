@@ -9,17 +9,18 @@ public class GazeManager : MonoBehaviour
 
     public static GazeManager Instance;
 
-    private void Awake()
+private void Awake()
+{
+    if (Instance != null && Instance != this)
     {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-        }
-        else
-        {
-            Instance = this;
-        }
+        Destroy(gameObject);
+        return;
     }
+
+    Instance = this;
+    DontDestroyOnLoad(gameObject); // 👈 asegura que nunca se destruya al cambiar de escena
+}
+
 
     [SerializeField] private GameObject gazeBarCanvas;
     [SerializeField] Image fillIndicator;
@@ -49,32 +50,43 @@ public class GazeManager : MonoBehaviour
         this.timeForSelection = timeForSelection;
     }
     public void StartGazeSelection()
-    {
-        gazeBarCanvas.SetActive(true);
-        runTimer = true;
-        timeProggres = 0;
-    }
+{
+    if (gazeBarCanvas == null || fillIndicator == null) return;
+    gazeBarCanvas.SetActive(true);
+    runTimer = true;
+    timeProggres = 0;
+}
+
 
     public void CancelGazeSelection()
-    {
+{
+    Debug.Log("CancelGazeSelection ejecutado en: " + gameObject.name);
+
+    if (gazeBarCanvas != null)
         gazeBarCanvas.SetActive(false);
-        runTimer = false;
-        timeProggres = 0;
-        timeCounter = 0;
-    }
+    else
+        Debug.LogWarning("⚠ gazeBarCanvas es NULL");
+
+    runTimer = false;
+    timeProggres = 0;
+    timeCounter = 0;
+}
+
 
     private void AddValue(float val) 
+{
+    timeCounter = val;
+    if (timeCounter >= timeForSelection)
     {
-        timeCounter = val;
-        if (timeCounter >= timeForSelection)
-        {
-            timeCounter = 0;
-            runTimer = false;
-            OnGazeSelection?.Invoke();
-        }
-
-        fillIndicator.fillAmount = Normalise();
+        timeCounter = 0;
+        runTimer = false;
+        OnGazeSelection?.Invoke();
     }
+
+    if (fillIndicator != null)
+        fillIndicator.fillAmount = Normalise();
+}
+
     private float Normalise() 
     {
         return (float)timeCounter / timeForSelection;
