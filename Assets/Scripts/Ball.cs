@@ -1,9 +1,11 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+
 public class Ball : MonoBehaviour {
 
     public Player player;
+    public Animator racketAnimator;  // Asignar desde Player o inspector
     public float speed = 2.5f;
     public float speedIncrement = 0.5f;
     public float deflectionDepth = 6f;
@@ -39,22 +41,18 @@ public class Ball : MonoBehaviour {
         transform.RotateAround(transform.position, Vector3.forward, rotatingSpeed * Time.deltaTime);
     }
 
-    public void OnPlayerHit () {
+    public void OnPlayerHit()
+    {
         if (player == null) return;
 
-        if (transform.position.z > player.transform.position.z) {
+        if (transform.position.z > player.transform.position.z)
+        {
             direction *= -1;
             speed += speedIncrement;
             score++;
-        }
-    }
 
-    // 👇 NUEVO MÉTODO: aquí detectas la colisión con el jugador
-    void OnCollisionEnter(Collision collision)
-    {
-        if (collision.gameObject.CompareTag("Player"))
-        {
-            OnPlayerHit();
         }
     }
+        
+
 }
