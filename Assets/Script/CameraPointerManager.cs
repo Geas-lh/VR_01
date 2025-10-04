@@ -4,41 +4,32 @@ using UnityEngine;
 
 public class CameraPointerManager : MonoBehaviour
 {
-    public Transform pointer;              // La raqueta como puntero
-    public float disPointerObject = 0.5f;  // Qué tan lejos del punto de impacto colocar el puntero
-    public string targetTag = "Interactable"; // El tag que debe tener el objeto para activar el puntero
+    public Transform racket;               // La raqueta que será el puntero
+    public Vector3 racketOffset = new Vector3(0.3f, -0.3f, 0.5f); // Posición relativa respecto a la cámara
+    public float disPointerObject = 0.5f;  // Offset antes del punto de impacto
+    public float defaultDistance = 2f;     // Distancia fija cuando no apunta a ningún objeto
 
     void Update()
     {
+        // Posición base de la raqueta según la cámara + offset
+        Vector3 basePosition = transform.position + transform.TransformDirection(racketOffset);
+
         Ray ray = new Ray(transform.position, transform.forward);
         RaycastHit hit;
 
         if (Physics.Raycast(ray, out hit))
         {
-            if (hit.transform.CompareTag(targetTag))
-            {
-                pointer.gameObject.SetActive(true);
-                PointerOnGaze(hit.point);
-            }
-            else
-            {
-                pointer.gameObject.SetActive(false);
-            }
+            Vector3 direction = (hit.point - transform.position).normalized;
+            // Posición objetivo: cerca del punto de impacto
+            racket.position = hit.point - direction * disPointerObject;
         }
         else
         {
-            pointer.gameObject.SetActive(false);
+            // Si no toca nada, posición base + distancia adelante
+            racket.position = basePosition + transform.forward * defaultDistance;
         }
-    }
 
-    private void PointerOnGaze(Vector3 hitPoint)
-    {
-        pointer.transform.position = CalculatePointerPosition(transform.position, hitPoint, disPointerObject);
-        // No cambia la escala: se mantiene constante
-    }
-
-    private Vector3 CalculatePointerPosition(Vector3 p0, Vector3 p1, float t)
-    {
-        return Vector3.Lerp(p0, p1, t);
+        // La raqueta siempre mira hacia donde apunta la cámara
+        racket.rotation = Quaternion.LookRotation(transform.forward);
     }
 }
