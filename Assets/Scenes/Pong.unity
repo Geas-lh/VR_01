@@ -582,7 +582,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 22a071d0704c5a347895d545bed1cd49, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 2.5599995
+      value: 1.81
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 22a071d0704c5a347895d545bed1cd49, type: 3}
       propertyPath: m_LocalRotation.w
@@ -692,7 +692,6 @@ GameObject:
   - component: {fileID: 959308589}
   - component: {fileID: 959308594}
   - component: {fileID: 959308595}
-  - component: {fileID: 959308596}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -884,22 +883,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ballProximity: 2
   animator: {fileID: 1489069760}
---- !u!114 &959308596
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 959308587}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 173fdb3a734414b46988f3740b6a5e6e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  racket: {fileID: 1489069759}
-  racketOffset: {x: 0.3, y: -0.3, z: 0.5}
-  disPointerObject: 0.5
-  defaultDistance: 5
+  hitCooldown: 1
 --- !u!1001 &1133466294
 PrefabInstance:
   m_ObjectHideFlags: 0
