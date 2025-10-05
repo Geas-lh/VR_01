@@ -56,18 +56,16 @@ public class CameraPointerManager : MonoBehaviour
         if (Physics.Raycast(transform.position, transform.forward, out hit, _maxDistance))
         {
             hitPoint = hit.point;
+            GameObject hitObj = hit.transform.gameObject;
 
-            // Detecta nuevo objeto
-            if (_gazedAtObject != hit.transform.gameObject)
+            if (_gazedAtObject != hitObj)
             {
-                // Exit del anterior
                 if (_gazedAtObject != null)
                 {
                     SimulateExit(_gazedAtObject);
                 }
 
-                // Nuevo objeto
-                _gazedAtObject = hit.transform.gameObject;
+                _gazedAtObject = hitObj;
 
                 if (_gazedAtObject != null)
                 {
@@ -75,27 +73,35 @@ public class CameraPointerManager : MonoBehaviour
                     GazeManager.Instance?.StartGazeSelection();
                 }
             }
-
-            // Si es interactuable
-            if (hit.transform != null && hit.transform.CompareTag(interactableTag))
+            else
             {
-                Debug.Log("Se reconoció el Tag Interactable → " + hit.transform.name);
+                // Si el objeto sigue igual y el timer no corre, reinicia el gaze
+                if (!GazeManager.Instance.IsRunning)
+                {
+                    GazeManager.Instance?.StartGazeSelection();
+                }
+            }
+
+            if (hitObj.CompareTag(interactableTag))
+            {
                 PointerOnGaze(hit.point);
             }
             else
             {
                 PointerOutGaze();
+                GazeManager.Instance?.CancelGazeSelection();
             }
         }
         else
         {
-            // Nada detectado
             if (_gazedAtObject != null)
             {
                 SimulateExit(_gazedAtObject);
             }
+
             _gazedAtObject = null;
             PointerOutGaze();
+            GazeManager.Instance?.CancelGazeSelection();
         }
 
         // Click manual (trigger Cardboard)
@@ -148,27 +154,16 @@ public class CameraPointerManager : MonoBehaviour
         return new Vector3(x, y, z);
     }
 
-    // ----------- 🔹 Métodos con ExecuteEvents ----------------
+    private void SimulateClick(GameObject target)
+    {
+        if (target == null) return;
+        var pointerData = new PointerEventData(EventSystem.current);
 
-private void SimulateClick(GameObject target)
-{
-    if (target == null) return;
-    var pointerData = new PointerEventData(EventSystem.current);
-
-    // Hover antes de click
-    ExecuteEvents.Execute(target, pointerData, ExecuteEvents.pointerEnterHandler);
-
-    // Click (Pressed)
-    ExecuteEvents.Execute(target, pointerData, ExecuteEvents.pointerDownHandler);
-    ExecuteEvents.Execute(target, pointerData, ExecuteEvents.pointerUpHandler);
-
-    // Submit → activa el Toggle
-    ExecuteEvents.Execute(target, pointerData, ExecuteEvents.submitHandler);
-
-    // Exit después del click (opcional)
-    // ExecuteEvents.Execute(target, pointerData, ExecuteEvents.pointerExitHandler);
-}
-
+        ExecuteEvents.Execute(target, pointerData, ExecuteEvents.pointerEnterHandler);
+        ExecuteEvents.Execute(target, pointerData, ExecuteEvents.pointerDownHandler);
+        ExecuteEvents.Execute(target, pointerData, ExecuteEvents.pointerUpHandler);
+        ExecuteEvents.Execute(target, pointerData, ExecuteEvents.submitHandler);
+    }
 
     private void SimulateEnter(GameObject target)
     {
