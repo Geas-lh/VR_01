@@ -4352,6 +4352,10 @@ PrefabInstance:
       propertyPath: highScoreText
       value: 
       objectReference: {fileID: 1698497611}
+    - target: {fileID: 3778963093949852167, guid: 1c021270ff075f14390f73761b9d2b5e, type: 3}
+      propertyPath: playerAnimator
+      value: 
+      objectReference: {fileID: 1929050435}
     - target: {fileID: 5316523021332580392, guid: 1c021270ff075f14390f73761b9d2b5e, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

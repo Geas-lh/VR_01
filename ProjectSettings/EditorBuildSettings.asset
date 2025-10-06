@@ -14,5 +14,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Pong.unity
     guid: 6f7b14984219ef04389a30ca6cbbf973
+  - enabled: 1
+    path: Assets/Scenes/Disco.unity
+    guid: 6f98e8d79edddf54186681159f86b963
   m_configObjects:
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: a95cc0c02d385034cad5a31b7961502f, type: 2}

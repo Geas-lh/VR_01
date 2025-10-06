@@ -16,7 +16,9 @@ public class Ball : MonoBehaviour
     [Header("UI")]
     public TextMeshProUGUI highScoreText;
 
-    private Animator playerAnimator;
+    [Header("Animation")]
+    public Animator playerAnimator; // 👈 Asignar manualmente
+    public string hitTriggerName = "Hit"; // 👈 Nombre del Trigger en el Animator
 
     void Start()
     {
@@ -24,17 +26,20 @@ public class Ball : MonoBehaviour
 
         if (player == null)
         {
-            Debug.LogError("❌ No se ha asignado el objeto Player en el inspector.");
+            Debug.LogError("❌ No se ha asignado el objeto Player.");
             return;
         }
 
-        playerAnimator = player.GetComponent<Animator>();
+        if (playerAnimator == null)
+        {
+            Debug.LogWarning("⚠ No se asignó el Animator. No se reproducirá animación.");
+        }
 
         // Dirección inicial
         direction = (player.transform.position - transform.position).normalized;
         rb.velocity = direction * speed;
 
-        // Mostrar HighScore inicial
+        // Mostrar HighScore
         UpdateHighScoreText();
     }
 
@@ -62,22 +67,22 @@ public class Ball : MonoBehaviour
     public void OnPlayerHit()
     {
         direction = (transform.position - player.transform.position).normalized;
-
         speed += speedIncrement;
         score++;
 
         if (playerAnimator != null)
-            playerAnimator.SetTrigger("Hit");
+        {
+            playerAnimator.ResetTrigger(hitTriggerName); // 🧼 Limpia el trigger
+            playerAnimator.SetTrigger(hitTriggerName);   // 🚀 Lo activa
+        }
 
-        // Guardar y actualizar HighScore
+        // HighScore
         int highScore = PlayerPrefs.GetInt("HighScore", 0);
-
         if (score > highScore)
         {
             PlayerPrefs.SetInt("HighScore", score);
             PlayerPrefs.Save();
             UpdateHighScoreText();
-            Debug.Log("🎉 Nuevo HighScore: " + score);
         }
     }
 
@@ -87,10 +92,6 @@ public class Ball : MonoBehaviour
         {
             int currentHighScore = PlayerPrefs.GetInt("HighScore", 0);
             highScoreText.text = "High Score: " + currentHighScore;
-        }
-        else
-        {
-            Debug.LogWarning("⚠ No se asignó el campo HighScoreText en el inspector.");
         }
     }
 }
