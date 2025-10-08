@@ -1,111 +1,115 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class CameraPointerManager : MonoBehaviour
 {
-    public static CameraPointerManager instance;
+    public static CameraPointerManager Instance; // Singleton accesible desde otros scripts
+
+    [Header("Configuración del puntero")]
     [SerializeField] private GameObject pointer;
     [SerializeField] private float maxDistancePointer = 15f;
-    private readonly string interactableTag = "Interactable";
-    private float scaleSize = 0.025f;
-    [Range(0, 1)]
-    [SerializeField] private float distPointerObject = 0.95f;
+    [SerializeField, Range(0, 1)] private float distPointerObject = 0.95f;
+    [SerializeField] private float scaleSize = 0.025f;
 
-    
-    private const float _maxDistance = 15;
+    private const float _maxDistance = 15f;
+    private readonly string interactableTag = "Interactable";
+
     private GameObject _gazedAtObject = null;
 
-    [HideInInspector]
-    public Vector3 hitPoint;
+    // 👉 ESTE es el punto que otros scripts usarán
+    public Vector3 hitPoint { get; private set; }
 
     private void Awake()
     {
-        if (instance != null && instance != this)
-        {
+        if (Instance != null && Instance != this)
             Destroy(gameObject);
-        }
-        else { 
-            instance = this;
-        }
+        else
+            Instance = this;
     }
 
     private void Start()
     {
-        GazeManager.Instance.OnGazeSelection += GazeSelection;        
+        // Se suscribe al evento de selección del gaze
+        GazeManager.Instance.OnGazeSelection += GazeSelection;
     }
 
-    private void GazeSelection() {
+    private void GazeSelection()
+    {
+        // Envía mensaje de "clic" al objeto observado
         _gazedAtObject?.SendMessage("OnPointerClickXR", null, SendMessageOptions.DontRequireReceiver);
     }
-    /// <summary>
-    /// 
-    /// Update is called once per frame.
-    /// </summary>
-    /// 
-    public void Update()
+
+    private void Update()
     {
-        // Casts ray towards camera's forward direction, to detect if a GameObject is being gazed
-        // at.
         RaycastHit hit;
+
+        // Lanza un rayo hacia adelante desde la cámara
         if (Physics.Raycast(transform.position, transform.forward, out hit, _maxDistance))
         {
-            
-            hitPoint = hit.point;
-            
-            // GameObject detected in front of the camera.
+            hitPoint = hit.point; // 👈 Actualiza la posición del impacto (para otros scripts)
+
+            // Detecta si cambió el objeto observado
             if (_gazedAtObject != hit.transform.gameObject)
             {
-                // New GameObject.
+                // Sale del objeto anterior
                 if (_gazedAtObject != null)
-                { _gazedAtObject?.SendMessage("OnPointerExitXR", null, SendMessageOptions.DontRequireReceiver); }
+                    _gazedAtObject.SendMessage("OnPointerExitXR", null, SendMessageOptions.DontRequireReceiver);
+
+                // Nuevo objeto detectado
                 _gazedAtObject = hit.transform.gameObject;
                 _gazedAtObject.SendMessage("OnPointerEnterXR", null, SendMessageOptions.DontRequireReceiver);
                 GazeManager.Instance.StartGazeSelection();
             }
+
+            // Si el objeto tiene el tag "Interactable"
             if (hit.transform.CompareTag(interactableTag))
             {
-                Debug.Log("Se reconocio el Tag Interactable"+ hit.transform.name);
-                
+                Debug.Log("Tag Interactable detectado: " + hit.transform.name);
                 PointerOnGaze(hit.point);
             }
-            else {
+            else
+            {
                 Debug.Log("OutGaze");
-                PointerOutGaze(); }
-
+                PointerOutGaze();
+            }
         }
         else
         {
-            // No GameObject detected in front of the camera.
+            // Si no hay ningún objeto enfrente
             if (_gazedAtObject != null)
-            { _gazedAtObject?.SendMessage("OnPointerExitXR", null, SendMessageOptions.DontRequireReceiver); }
+                _gazedAtObject.SendMessage("OnPointerExitXR", null, SendMessageOptions.DontRequireReceiver);
+
             _gazedAtObject = null;
             PointerOutGaze();
         }
 
-        // Checks for screen touches.
+        // Disparo con Cardboard trigger (toque o botón)
         if (Google.XR.Cardboard.Api.IsTriggerPressed)
         {
             _gazedAtObject?.SendMessage("OnPointerClickXR", null, SendMessageOptions.DontRequireReceiver);
         }
     }
 
-    private void PointerOutGaze() {
+    private void PointerOutGaze()
+    {
+        // Vuelve el puntero a su posición y tamaño por defecto
         pointer.transform.localScale = Vector3.one * 0.1f;
-        pointer.transform.parent.transform.localPosition = new Vector3(0, 0, maxDistancePointer);
-        pointer.transform.parent.parent.transform.rotation = transform.rotation;
+        pointer.transform.parent.localPosition = new Vector3(0, 0, maxDistancePointer);
+        pointer.transform.parent.parent.rotation = transform.rotation;
         GazeManager.Instance.CancelGazeSelection();
     }
-    private void PointerOnGaze(Vector3 hitPoint) {
-        float scaleFactor = scaleSize * Vector3.Distance(transform.position, hitPoint);
+
+    private void PointerOnGaze(Vector3 hitPosition)
+    {
+        float scaleFactor = scaleSize * Vector3.Distance(transform.position, hitPosition);
         pointer.transform.localScale = Vector3.one * scaleFactor;
-        pointer.transform.parent.position = CalculatePointerPosition(transform.position, hitPoint, distPointerObject);
-        Debug.Log(pointer.transform.parent.position);
+        pointer.transform.parent.position = CalculatePointerPosition(transform.position, hitPosition, distPointerObject);
     }
-    private Vector3 CalculatePointerPosition(Vector3 p0, Vector3 p1, float t) {
-        float x = p0.x + t * (p1.x - p0.x);
-        float y = p0.y + t * (p1.y - p0.y);
-        float z = p0.z + t * (p1.z - p0.z);
-        return new Vector3(x, y, z);
+
+    private Vector3 CalculatePointerPosition(Vector3 start, Vector3 end, float t)
+    {
+        // Calcula una posición interpolada entre la cámara y el punto de impacto
+        return start + t * (end - start);
     }
 }
