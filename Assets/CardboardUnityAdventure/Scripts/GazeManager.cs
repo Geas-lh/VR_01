@@ -79,4 +79,18 @@ public class GazeManager : MonoBehaviour
     {
         return (float)timeCounter / timeForSelection;
     }
+    public void SetGazedAt(bool gazedAt)
+    {
+        if (gazedAt)
+        {
+            // Si el puntero está sobre un objeto interactivo, iniciamos el conteo del gaze
+            StartGazeSelection();
+        }
+        else
+        {
+            // Si se aleja del objeto, cancelamos el conteo
+            CancelGazeSelection();
+        }
+    }
+
 }
