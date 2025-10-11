@@ -2,46 +2,67 @@
 using UnityEngine.SceneManagement;
 using System.Collections;
 using TMPro;
-using Random = UnityEngine.Random;  // Alias para evitar conflicto con System.Random
+using Random = UnityEngine.Random;
 
 public class GameController : MonoBehaviour
 {
+    [Header("UI")]
+    public TextMeshProUGUI infoText;     
+    public TextMeshProUGUI aciertosText;
+    public TextMeshProUGUI fallosText;
 
-    public TextMeshProUGUI infoText;      // Texto para mensajes tipo "Ganaste", "Perdiste"
-    public TextMeshProUGUI scoreText;     // Nuevo texto para mostrar el score
+    [Header("Game Objects")]
     public GameObject ball;
     public Player player;
     public Cup[] cups;
 
     private float resetTimer = 3f;
 
-    private int score = 0; // Variable para el score
+    private int aciertos = 0;
+    private int fallos = 0;
+    private bool resultadoProcesado = false;  // <- NUEVO: evita que se sume varias veces
 
-    // Use this for initialization
     void Start()
     {
+        // Cargar valores guardados
+        aciertos = PlayerPrefs.GetInt("Aciertos", 0);
+        fallos = PlayerPrefs.GetInt("Fallos", 0);
+
         UpdateScoreText();
-        infoText.text = "Elige el vaso correcto!";
+        infoText.text = "¡Elige el vaso correcto!";
 
         StartCoroutine(ShuffleRoutine());
     }
 
-    // Update is called once per frame
     void Update()
     {
-        if (player.picked)
+        // Solo procesar el resultado una vez
+        if (player.picked && !resultadoProcesado)
         {
+            resultadoProcesado = true; // <- evita múltiples sumas
+
             if (player.won)
             {
-                infoText.text = "Ganaste!";
-                score++;  // Aumentar score
-                UpdateScoreText();
+                infoText.text = "¡Ganaste!";
+                aciertos++;
             }
             else
             {
-                infoText.text = "Perdiste :( Intentar de Nuevo!";
+                infoText.text = "Perdiste :( ¡Intenta de nuevo!";
+                fallos++;
             }
 
+            // Guardar progreso
+            PlayerPrefs.SetInt("Aciertos", aciertos);
+            PlayerPrefs.SetInt("Fallos", fallos);
+            PlayerPrefs.Save();
+
+            UpdateScoreText();
+        }
+
+        // Esperar para reiniciar la escena
+        if (resultadoProcesado)
+        {
             resetTimer -= Time.deltaTime;
             if (resetTimer <= 0f)
             {
@@ -52,7 +73,8 @@ public class GameController : MonoBehaviour
 
     private void UpdateScoreText()
     {
-        scoreText.text = "Score: " + score;
+        aciertosText.text = "Aciertos: " + aciertos;
+        fallosText.text = "Fallos: " + fallos;
     }
 
     private IEnumerator ShuffleRoutine()
@@ -60,9 +82,7 @@ public class GameController : MonoBehaviour
         yield return new WaitForSeconds(1f);
 
         foreach (Cup cup in cups)
-        {
             cup.MoveUp();
-        }
 
         yield return new WaitForSeconds(0.5f);
 
@@ -74,14 +94,12 @@ public class GameController : MonoBehaviour
             targetCup.transform.position.z
         );
 
-        yield return new WaitForSeconds(1.0f);
+        yield return new WaitForSeconds(1f);
 
         foreach (Cup cup in cups)
-        {
             cup.MoveDown();
-        }
 
-        yield return new WaitForSeconds(1.0f);
+        yield return new WaitForSeconds(1f);
 
         for (int i = 0; i < 5; i++)
         {
@@ -89,14 +107,11 @@ public class GameController : MonoBehaviour
             Cup cup2 = cup1;
 
             while (cup2 == cup1)
-            {
                 cup2 = cups[Random.Range(0, cups.Length)];
-            }
 
-            Vector3 cup1Position = cup1.targetPosition;
-
+            Vector3 temp = cup1.targetPosition;
             cup1.targetPosition = cup2.targetPosition;
-            cup2.targetPosition = cup1Position;
+            cup2.targetPosition = temp;
 
             yield return new WaitForSeconds(0.75f);
         }
